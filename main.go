@@ -17,13 +17,10 @@ func main() {
     fmt.Println("Example: gigit nazhard/gigit")
   }
   
-  out, err := exec.Command(
+  _, err := exec.Command(
     "git", "clone", "https://github.com/"+user_repo+".git").Output()
 
-  if err != nil {
-    fmt.Println(err)
+  if err != nil && len(os.Args) >= 2 {
+    fmt.Println(user_repo, "not found, onii")
   }
-
-  fmt.Println(string(out))
-
 }
