@@ -7,37 +7,44 @@ import (
   "strings"
 )
 
-const err_clone_msg = "Something error when clone "
-
-var user_repo string
+var (
+  user_repo string
+  others []string
+)
 
 func main() {
   if len(os.Args) >= 2 {
     if strings.Contains(os.Args[1], "-1") {
       user_repo = os.Args[2]
+      
+      for _, i := range os.Args[3:] {
+        others = append(others, i)
+      }
 
-      _, err := exec.Command(
-        "git", "clone", "--depth=1", "https://github.com/"+user_repo+".git").Output()
+      cmd := exec.Command("git", "clone", "--depth=1", "https://github.com/"+user_repo+".git", strings.Join(others, ", "))
+      cmd.Stdout = os.Stdout
+      cmd.Stderr = os.Stderr
 
-      handleErr(err, err_clone_msg + user_repo)
-      handleErr(err, user_repo + " Not Found, Onii")
+      _ = cmd.Start()
+
+      defer cmd.Wait()
     } else {
       user_repo = os.Args[1]
 
-      _, err := exec.Command(
-        "git", "clone", "https://github.com/"+user_repo+".git").Output()
+      for _, i := range os.Args[2:] {
+        others = append(others, i)
+      }
 
-      handleErr(err, err_clone_msg + user_repo)
-      handleErr(err, user_repo + " Not Found, Onii")
+      cmd := exec.Command("git", "clone", "https://github.com/"+user_repo+".git", strings.Join(others, ", "))
+      cmd.Stdout = os.Stdout
+      cmd.Stderr = os.Stderr
+
+      _ = cmd.Start()
+
+      defer cmd.Wait()
     }
   } else {
     fmt.Println("Onii-chan! anata wa need repository!\n")
     fmt.Println("Example: gigit nazhard/gigit")
-  }
-}
-
-func handleErr(err error, printText any) {
-  if err != nil {
-    fmt.Println(printText)
   }
 }
