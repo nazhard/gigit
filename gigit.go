@@ -45,17 +45,24 @@ func Get(name, commit, out_path string) (string, error) {
 		file_name = fullPath[lastSlashIndex+1:]
 	}
 
-	f, _ := os.Create(out_path + file_name + ".tar.gz")
-
-	defer f.Close()
-
-	_, err = f.ReadFrom(res.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	if res.StatusCode != http.StatusOK {
 		return url, errors.New(gchalk.Red("Error " + name + " not found"))
+	}
+
+	if res.StatusCode == http.StatusOK {
+		output_goberr := filepath.Join(out_path, file_name+".tar.gz")
+		_, err := os.Stat(out_path)
+		if os.IsNotExist(err) {
+			_ = os.MkdirAll(out_path, os.ModePerm)
+		}
+		f, _ := os.Create(output_goberr)
+
+		defer f.Close()
+
+		_, err = f.ReadFrom(res.Body)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return url, nil

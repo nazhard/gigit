@@ -42,10 +42,13 @@ func exec() {
 		_ = os.MkdirAll(cache_path, os.ModePerm)
 	}
 
+	one := strings.Split(os.Args[1], "/")
+
 	// By default it uses HEAD as commit, which is why GetLatestCommit() is so important.
 	// When the download is complete, there will be a tarball,
 	// in the tarball there is a pattern of names user-repo-commit_hash
-	url, err := gigit.Get(os.Args[1], "HEAD", cache_path)
+	goberr := filepath.Join(cache_path, one[0], one[1])
+	url, err := gigit.Get(os.Args[1], "HEAD", goberr)
 	commit_hash := gigit.GetLatestCommit(os.Args[1])
 	fmt.Println("Fetching " + gchalk.Underline(url))
 
@@ -57,14 +60,13 @@ func exec() {
 	}
 
 	if err == nil {
-		n := strings.Split(os.Args[1], "/")
-		sub := n[0] + "-" + n[1] + "-" + commit_hash
-		file_name := n[1] + ".tar.gz"
-		cache := filepath.Join(cache_path, n[0], n[1])
+		sub := one[0] + "-" + one[1] + "-" + commit_hash
+		file_name := one[1] + ".tar.gz"
+		cache := filepath.Join(cache_path, one[0], one[1])
 		_ = os.MkdirAll(cache, os.ModePerm)
 
 		file := filepath.Join(cache, file_name)
-		gigit.ExtractGz(file, n[1], sub)
+		gigit.ExtractGz(file, one[1], sub)
 
 		fmt.Println("repo success full downloaded.")
 	}
