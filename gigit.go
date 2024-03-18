@@ -1,4 +1,4 @@
-package main
+package gigit
 
 import (
 	"context"
@@ -26,48 +26,10 @@ var (
 	file_name string
 )
 
-const version = "v0.1.0"
-
-func main() {
-	fmt.Println(gchalk.Bold("using gigit " + version))
-
-	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".gigit")
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		_ = os.MkdirAll(path, os.ModePerm)
-	}
-
-	if len(os.Args) > 1 {
-		url, err := fetch(os.Args[1], "HEAD")
-		c := getLatestCommit()
-		fmt.Println("Fetching " + gchalk.Underline(url))
-
-		if err != nil {
-			fmt.Println(err)
-			fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
-
-			clone()
-		}
-
-		if err == nil {
-			fmt.Println("repo success full downloaded.")
-			n := strings.Split(os.Args[1], "/")
-			sub := n[0] + "-" + n[1] + "-" + c
-			file_name := n[1] + ".tar.gz"
-			extractGz(file_name, n[1], sub)
-
-			cache := filepath.Join(path, n[0], n[1])
-			_ = os.MkdirAll(cache, os.ModePerm)
-			_ = os.Rename(file_name, cache+"/"+file_name)
-		}
-	} else {
-		fmt.Println(gchalk.Red("Onii-chan! anata wa need repository!"))
-		fmt.Println(gchalk.Blue("Example: gigit nazhard/gigit"))
-	}
-}
-
-func fetch(name, commit string) (string, error) {
+// Get is used to download the repository.
+// Get requires the repository name and its commit and output path for downloaded repository
+// Get returns url used to download repo as string and returns an error when an error occurs.
+func Get(name, commit, out_path string) (string, error) {
 	url := "https://api.github.com/repos/" + name + "/tarball" + "/" + commit
 
 	res, err := http.Get(url)
@@ -83,7 +45,7 @@ func fetch(name, commit string) (string, error) {
 		file_name = fullPath[lastSlashIndex+1:]
 	}
 
-	f, _ := os.Create(file_name + ".tar.gz")
+	f, _ := os.Create(out_path + file_name + ".tar.gz")
 
 	defer f.Close()
 
@@ -99,9 +61,12 @@ func fetch(name, commit string) (string, error) {
 	return url, nil
 }
 
-// get latest commit
-func getLatestCommit() string {
-	url := "https://api.github.com/repos/nazhard/do/commits"
+// This function will fetch the latest commit hash from the repository for the extractor's use.
+// GetLatestCommit is only used when the user does not provide a specific commit hash.
+//
+// Example: `gigit nazhard/gigit`
+func GetLatestCommit(user_repo string) string {
+	url := "https://api.github.com/repos/" + user_repo + "/commits"
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -119,47 +84,57 @@ func getLatestCommit() string {
 
 	var c string
 	if len(commits) > 1 {
-		first := commits[0]
-		c = first.Sha
+		commit := commits[0]
+		c = commit.Sha
 	}
 
 	return c
 }
 
-// extract downloaded repository
-func extractGz(in, out, path string) {
+// Checks the cache stored in the default cache directory for gigit.
+//
+// CheckCache returns a boolean. If the cache exists, it returns true. If it doesn't exist, it returns false.
+//
+// CheckCache requires path for the default cache path X, name for the repository name, and commit hash.
+func CheckCache(path, name, commit_hash string) bool {
+	cache_path := filepath.Join(path, name, commit_hash)
+
+	_, err := os.Stat(cache_path)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
+// Extract downloaded repository.
+//
+// Extract requires a file or path to a file in .tar.gz format as `in`,
+// then an output directory for the extracted contents of the .tar.gz file as `out`
+// and a specific directory/path inside the .tar.gz file to extract its contents as `path`.
+func ExtractGz(in, out, path string) {
 	file, _ := os.Open(in)
+
 	var shift = func(path string) string {
 		parts := strings.Split(path, string(filepath.Separator))
 		parts = parts[1:]
 		return strings.Join(parts, string(filepath.Separator))
 	}
+
 	extract.Gz(context.TODO(), file, out, shift)
 }
 
-// this will be useful for private repositories
-func clone() {
-	if len(os.Args) >= 2 {
-		if strings.Contains(os.Args[1], "-1") {
-			user_repo = os.Args[2]
+// Clone repositories using git instead
+// This will automatically be used when gigit does not find the intended repository.
+// This is especially useful when you want to type "gigit user/repo" instead of "git clone https...".
+// In simple terms, it is meant to clone a private repository
+// user_repo here refers to a string containing "user/repo", not "user" or "repo" only!
+func Clone(host, user_repo string) {
+	cmd := exec.Command("git", "clone", host+"/"+user_repo+".git")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-			cmd := exec.Command("git", "clone", "--depth=1", "https://github.com/"+user_repo+".git")
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+	_ = cmd.Start()
 
-			_ = cmd.Start()
-
-			defer cmd.Wait()
-		} else {
-			user_repo = os.Args[1]
-
-			cmd := exec.Command("git", "clone", "https://github.com/"+user_repo+".git")
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			_ = cmd.Start()
-
-			defer cmd.Wait()
-		}
-	}
+	defer cmd.Wait()
 }
