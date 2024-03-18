@@ -64,7 +64,7 @@ func Get(name, commit, out_path string) (string, error) {
 // This function will fetch the latest commit hash from the repository for the extractor's use.
 // GetLatestCommit is only used when the user does not provide a specific commit hash.
 //
-// Example: `gigit nazhard/gigit`
+// Example: "gigit nazhard/gigit"
 func GetLatestCommit(user_repo string) string {
 	url := "https://api.github.com/repos/" + user_repo + "/commits"
 	res, err := http.Get(url)
@@ -95,7 +95,7 @@ func GetLatestCommit(user_repo string) string {
 //
 // CheckCache returns a boolean. If the cache exists, it returns true. If it doesn't exist, it returns false.
 //
-// CheckCache requires path for the default cache path X, name for the repository name, and commit hash.
+// CheckCache requires path for the default cache path, name for the repository name, and commit hash.
 func CheckCache(path, name, commit_hash string) bool {
 	cache_path := filepath.Join(path, name, commit_hash)
 
@@ -109,9 +109,9 @@ func CheckCache(path, name, commit_hash string) bool {
 
 // Extract downloaded repository.
 //
-// Extract requires a file or path to a file in .tar.gz format as `in`,
-// then an output directory for the extracted contents of the .tar.gz file as `out`
-// and a specific directory/path inside the .tar.gz file to extract its contents as `path`.
+// Extract requires a file or path to a file in .tar.gz format as "in",
+// then an output directory for the extracted contents of the .tar.gz file as "out"
+// and a specific directory/path inside the .tar.gz file to extract its contents as "path".
 func ExtractGz(in, out, path string) {
 	file, _ := os.Open(in)
 
@@ -124,10 +124,13 @@ func ExtractGz(in, out, path string) {
 	extract.Gz(context.TODO(), file, out, shift)
 }
 
-// Clone repositories using git instead
+// Clone repositories using git instead.
+//
 // This will automatically be used when gigit does not find the intended repository.
+//
 // This is especially useful when you want to type "gigit user/repo" instead of "git clone https...".
-// In simple terms, it is meant to clone a private repository
+// In simple terms, it is meant to clone a private repository.
+//
 // user_repo here refers to a string containing "user/repo", not "user" or "repo" only!
 func Clone(host, user_repo string) {
 	cmd := exec.Command("git", "clone", host+"/"+user_repo+".git")
