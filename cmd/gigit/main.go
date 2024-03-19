@@ -35,7 +35,7 @@ func invalid() {
 		gchalk.Green("Valid format: 'gigit user/repo'"))
 }
 
-func exec(cache_path string) {
+func exec(cache_path string) error {
 	one := strings.Split(os.Args[1], "/")
 	goberr := filepath.Join(cache_path, one[0], one[1])
 
@@ -54,7 +54,7 @@ func exec(cache_path string) {
 		fmt.Println(err)
 		fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
 
-		gigit.Clone("https://github.com", os.Args[1])
+		return fmt.Errorf("Error")
 	}
 
 	if err == nil {
@@ -71,11 +71,13 @@ func exec(cache_path string) {
 		fmt.Println(
 			gchalk.Green("repo success full downloaded."))
 	}
+
+	return nil
 }
 
 // Why did I do this? Because I was stressed out with the errors that were appearing.
 // I think making the code twice is easier to read and maintain.
-func sharpExec(cache_path string) {
+func sharpExec(u_r, user, repo, cache_path string) error {
 	var hash string
 
 	index_one := strings.Index(os.Args[1], "#")
@@ -83,16 +85,12 @@ func sharpExec(cache_path string) {
 		hash = os.Args[1][index_one+1:]
 	}
 
-	eps := strings.Split(os.Args[1], "#")
-	get_name := eps[0]
-	one := strings.Split(eps[0], "/")
+	goberr := filepath.Join(cache_path, user, repo)
 
-	goberr := filepath.Join(cache_path, one[0], one[1])
+	url, err := gigit.Get(u_r, hash, goberr)
 
-	url, err := gigit.Get(get_name, hash, goberr)
-
-	sub := one[0] + "-" + one[1] + "-" + hash
-	file_name := one[1] + ".tar.gz"
+	sub := user + "-" + repo + "-" + hash
+	file_name := repo + ".tar.gz"
 
 	fmt.Println("Fetching " + gchalk.Underline(url))
 
@@ -100,23 +98,24 @@ func sharpExec(cache_path string) {
 		fmt.Println(err)
 		fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
 
-		gigit.Clone("https://github.com", os.Args[1])
+		return fmt.Errorf("Upps")
 	}
 
 	if err == nil {
-		cache := filepath.Join(cache_path, one[0], one[1])
+		cache := filepath.Join(cache_path, user, repo)
 		err = os.MkdirAll(cache, os.ModePerm)
-
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		file := filepath.Join(cache, file_name)
-		gigit.ExtractGz(file, one[1], sub)
+		gigit.ExtractGz(file, repo, sub)
 
 		fmt.Println(
 			gchalk.Green("repo success full downloaded."))
 	}
+
+	return nil
 }
 
 func main() {
@@ -144,11 +143,25 @@ func main() {
 		// Checks to see if os.Args[1] (argument) has "/" or not.
 		if strings.Contains(os.Args[1], "/") {
 			if !strings.Contains(os.Args[1], "#") {
-				exec(cache_path)
+				err := exec(cache_path)
+				if err != nil {
+					gigit.Clone("https://github.com", os.Args[1])
+				}
 			}
 
 			if strings.Contains(os.Args[1], "#") {
-				sharpExec(cache_path)
+				eps := strings.Split(os.Args[1], "#")
+				array := strings.Split(eps[0], "/")
+
+				user := array[0]
+				repo := array[1]
+
+				user_repo := user + "/" + repo
+
+				err := sharpExec(eps[0], user, repo, cache_path)
+				if err != nil {
+					gigit.Clone("https://github.com", user_repo)
+				}
 			}
 		}
 
