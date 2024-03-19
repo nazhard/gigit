@@ -80,7 +80,7 @@ func GetLatestCommit(user_repo string) string {
 	url := "https://api.github.com/repos/" + user_repo + "/commits"
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error, maybe your internet connection is bad")
 	}
 	defer res.Body.Close()
 
