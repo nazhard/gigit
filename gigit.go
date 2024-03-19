@@ -86,7 +86,7 @@ func GetLatestCommit(user_repo string) string {
 
 	err = json.Unmarshal(data, &commits)
 	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
+		return ""
 	}
 
 	var c string
