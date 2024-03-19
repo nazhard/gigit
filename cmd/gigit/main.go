@@ -41,7 +41,7 @@ func exec(user, repo, cache_path string) error {
 	// By default it uses HEAD as commit, which is why GetLatestCommit() is so important.
 	// When the download is complete, there will be a tarball,
 	// in the tarball there is a pattern of names user-repo-commit_hash
-	url, err := gigit.Get(os.Args[1], "HEAD", goberr)
+	url, err := gigit.Get(os.Args[1], "HEAD", goberr, "")
 
 	commit_hash := gigit.GetLatestCommit(os.Args[1])
 	sub := user + "-" + repo + "-" + commit_hash
@@ -77,7 +77,11 @@ func exec(user, repo, cache_path string) error {
 // Why did I do this? Because I was stressed out with the errors that were appearing.
 // I think making the code twice is easier to read and maintain.
 func sharpExec(u_r, user, repo, cache_path string) error {
-	var hash string
+	var (
+		hash string
+		url  string
+		err  error
+	)
 
 	index_one := strings.Index(os.Args[1], "#")
 	if index_one != -1 {
@@ -86,7 +90,13 @@ func sharpExec(u_r, user, repo, cache_path string) error {
 
 	goberr := filepath.Join(cache_path, user, repo)
 
-	url, err := gigit.Get(u_r, hash, goberr)
+	url, err = gigit.Get(u_r, hash, goberr, "")
+
+	if strings.Contains(hash, "v") {
+		v := hash[1:]
+		c_url := "https://github.com/" + u_r + "/archive/refs/tags/" + hash + ".tar.gz"
+		url, err = gigit.Get(u_r, v, goberr, c_url)
+	}
 
 	sub := user + "-" + repo + "-" + hash
 	file_name := repo + ".tar.gz"

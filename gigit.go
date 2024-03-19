@@ -28,9 +28,13 @@ var (
 
 // Get is used to download the repository.
 // Get requires the repository name and its commit and output path for downloaded repository
+// and optionally, a custom url.
 // Get returns url used to download repo as string and returns an error when an error occurs.
-func Get(name, commit, out_path string) (string, error) {
-	url := "https://api.github.com/repos/" + name + "/tarball" + "/" + commit
+func Get(name, commit, out_path, c_url string) (string, error) {
+	url := c_url
+	if c_url == "" {
+		url = "https://api.github.com/repos/" + name + "/tarball" + "/" + commit
+	}
 
 	res, err := http.Get(url)
 	if err != nil {
