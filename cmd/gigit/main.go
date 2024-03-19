@@ -35,9 +35,8 @@ func invalid() {
 		gchalk.Green("Valid format: 'gigit user/repo'"))
 }
 
-func exec(cache_path string) error {
-	one := strings.Split(os.Args[1], "/")
-	goberr := filepath.Join(cache_path, one[0], one[1])
+func exec(user, repo, cache_path string) error {
+	goberr := filepath.Join(cache_path, user, repo)
 
 	// By default it uses HEAD as commit, which is why GetLatestCommit() is so important.
 	// When the download is complete, there will be a tarball,
@@ -45,8 +44,8 @@ func exec(cache_path string) error {
 	url, err := gigit.Get(os.Args[1], "HEAD", goberr)
 
 	commit_hash := gigit.GetLatestCommit(os.Args[1])
-	sub := one[0] + "-" + one[1] + "-" + commit_hash
-	file_name := one[1] + ".tar.gz"
+	sub := user + "-" + repo + "-" + commit_hash
+	file_name := repo + ".tar.gz"
 
 	fmt.Println("Fetching " + gchalk.Underline(url))
 
@@ -58,7 +57,7 @@ func exec(cache_path string) error {
 	}
 
 	if err == nil {
-		cache := filepath.Join(cache_path, one[0], one[1])
+		cache := filepath.Join(cache_path, user, repo)
 		err = os.MkdirAll(cache, os.ModePerm)
 
 		if err != nil {
@@ -66,7 +65,7 @@ func exec(cache_path string) error {
 		}
 
 		file := filepath.Join(cache, file_name)
-		gigit.ExtractGz(file, one[1], sub)
+		gigit.ExtractGz(file, repo, sub)
 
 		fmt.Println(
 			gchalk.Green("repo success full downloaded."))
@@ -143,7 +142,10 @@ func main() {
 		// Checks to see if os.Args[1] (argument) has "/" or not.
 		if strings.Contains(os.Args[1], "/") {
 			if !strings.Contains(os.Args[1], "#") {
-				err := exec(cache_path)
+				array := strings.Split(os.Args[1], "/")
+				user, repo := array[0], array[1]
+
+				err := exec(user, repo, cache_path)
 				if err != nil {
 					gigit.Clone("https://github.com", os.Args[1])
 				}
@@ -152,9 +154,7 @@ func main() {
 			if strings.Contains(os.Args[1], "#") {
 				eps := strings.Split(os.Args[1], "#")
 				array := strings.Split(eps[0], "/")
-
-				user := array[0]
-				repo := array[1]
+				user, repo := array[0], array[1]
 
 				user_repo := user + "/" + repo
 
