@@ -12,19 +12,30 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/codeclysm/extract/v3"
 	"github.com/jwalton/gchalk"
 )
 
-type Commit struct {
+type commitT struct {
 	Sha string `json:"sha"`
+}
+
+type branchT struct {
+	Commit struct {
+		Sha string `json:"sha"`
+	} `json:"commit"`
 }
 
 var (
 	user_repo string
 	file_name string
 )
+
+var client = http.Client{
+	Timeout: 5 * time.Second,
+}
 
 // Get is used to download the repository.
 // Get requires the repository name and its commit and output path for downloaded repository
@@ -36,7 +47,7 @@ func Get(name, commit, out_path, c_url string) (string, error) {
 		url = "https://api.github.com/repos/" + name + "/tarball" + "/" + commit
 	}
 
-	res, err := http.Get(url)
+	res, err := client.Get(url)
 	if err != nil {
 		return url, errors.New(gchalk.Red("Error when fetching " + url))
 	}
@@ -78,7 +89,7 @@ func Get(name, commit, out_path, c_url string) (string, error) {
 // Example: "gigit nazhard/gigit"
 func GetLatestCommit(user_repo string) string {
 	url := "https://api.github.com/repos/" + user_repo + "/commits"
-	res, err := http.Get(url)
+	res, err := client.Get(url)
 	if err != nil {
 		log.Fatal("Error, maybe your internet connection is bad")
 	}
@@ -86,7 +97,7 @@ func GetLatestCommit(user_repo string) string {
 
 	data, _ := io.ReadAll(res.Body)
 
-	var commits []Commit
+	var commits []commitT
 
 	err = json.Unmarshal(data, &commits)
 	if err != nil {
@@ -100,6 +111,30 @@ func GetLatestCommit(user_repo string) string {
 	}
 
 	return c
+}
+
+func GetCommitBranch(user_repo, branch string) (string, string, error) {
+	url_to_fetch := "https://api.github.com/repos/" + user_repo + "/branches/" + branch
+	url := "https://github.com/" + user_repo + "/archive/refs/tags/" + branch + ".tar.gz"
+
+	res, err := client.Get(url_to_fetch)
+	if err != nil {
+		return "", "", fmt.Errorf("Upps branch not found!")
+	}
+	res.Body.Close()
+
+	data, _ := io.ReadAll(res.Body)
+
+	var bran branchT
+
+	err = json.Unmarshal(data, &bran)
+	if err != nil {
+		return "", "", fmt.Errorf("upps, error")
+	}
+
+	commit := bran.Commit.Sha
+
+	return url, commit, nil
 }
 
 // Checks the cache stored in the default cache directory for gigit.

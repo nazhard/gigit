@@ -101,16 +101,42 @@ func sharpExec(u_r, user, repo, cache_path string) error {
 	sub := user + "-" + repo + "-" + hash
 	file_name := repo + ".tar.gz"
 
-	fmt.Println("Fetching " + gchalk.Underline(url))
-
 	if err != nil {
-		fmt.Println(err)
-		fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
+		url, commit, err := gigit.GetCommitBranch(u_r, hash)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
 
-		return fmt.Errorf("Upps")
+			return fmt.Errorf("Upps")
+		}
+
+		if err == nil {
+			fmt.Println("Fetching " + gchalk.Underline(url))
+
+			cache := filepath.Join(cache_path, user, repo)
+
+			err = os.MkdirAll(cache, os.ModePerm)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			url, err = gigit.Get(u_r, commit, goberr, url)
+			if err != nil {
+				fmt.Println(
+					gchalk.Red("Internal error"))
+			}
+
+			file := filepath.Join(cache, file_name)
+			gigit.ExtractGz(file, repo, sub)
+
+			fmt.Println(
+				gchalk.Green("repo success full downloaded."))
+		}
 	}
 
 	if err == nil {
+		fmt.Println("Fetching " + gchalk.Underline(url))
+
 		cache := filepath.Join(cache_path, user, repo)
 		err = os.MkdirAll(cache, os.ModePerm)
 		if err != nil {
