@@ -213,6 +213,10 @@ Host: github or gitlab
 Examples: gigit nazhard/gigit
           gigit github:nazhard/gigit`)
 		}
+
+		if os.Args[1] != "help" && !strings.Contains(os.Args[1], "/") {
+			invalid()
+		}
 	}
 
 	// Currently we do not have a feature to handle arguments with more than 2
