@@ -1,7 +1,6 @@
 package gigit
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codeclysm/extract/v3"
 	"github.com/jwalton/gchalk"
+	"github.com/mholt/archiver/v3"
 )
 
 type commitT struct {
@@ -41,7 +40,7 @@ var client = http.Client{
 // Get requires the repository name and its commit and output path for downloaded repository
 // and optionally, a custom url.
 // Get returns url used to download repo as string and returns an error when an error occurs.
-func Get(name, commit, out_path, c_url string) (string, error) {
+func Get(name, commit, destination, c_url string) (string, error) {
 	url := c_url
 	if c_url == "" {
 		url = "https://api.github.com/repos/" + name + "/tarball" + "/" + commit
@@ -65,12 +64,12 @@ func Get(name, commit, out_path, c_url string) (string, error) {
 	}
 
 	if res.StatusCode == http.StatusOK {
-		output_goberr := filepath.Join(out_path, file_name+".tar.gz")
-		_, err := os.Stat(out_path)
+		out_path := filepath.Join(destination, file_name+".tar.gz")
+		_, err := os.Stat(destination)
 		if os.IsNotExist(err) {
-			_ = os.MkdirAll(out_path, os.ModePerm)
+			_ = os.MkdirAll(destination, os.ModePerm)
 		}
-		f, _ := os.Create(output_goberr)
+		f, _ := os.Create(out_path)
 
 		defer f.Close()
 
@@ -155,19 +154,14 @@ func CheckCache(path, name, commit_hash string) bool {
 
 // Extract downloaded repository.
 //
-// Extract requires a file or path to a file in .tar.gz format as "in",
-// then an output directory for the extracted contents of the .tar.gz file as "out"
-// and a specific directory/path inside the .tar.gz file to extract its contents as "path".
-func ExtractGz(in, out, path string) {
-	file, _ := os.Open(in)
+// Extract file .tar.gz as "source",
+// then an output directory for the extracted contents of the .tar.gz file as "destination",
+// and a specific directory/path inside the .tar.gz file to extract its contents as "target".
+func ExtractGz(source, target, destination string, strip int) {
+	archive := archiver.NewTarGz()
 
-	var shift = func(path string) string {
-		parts := strings.Split(path, string(filepath.Separator))
-		parts = parts[1:]
-		return strings.Join(parts, string(filepath.Separator))
-	}
-
-	extract.Gz(context.TODO(), file, out, shift)
+	archive.StripComponents = strip
+	archive.Extract(source, target, destination)
 }
 
 // Clone repositories using git instead.
@@ -176,10 +170,18 @@ func ExtractGz(in, out, path string) {
 //
 // This is especially useful when you want to type "gigit user/repo" instead of "git clone https...".
 // In simple terms, it is meant to clone a private repository.
+// Set depth to true if you want using "--depth 1"
 //
 // user_repo here refers to a string containing "user/repo", not "user" or "repo" only!
-func Clone(host, user_repo string) {
-	cmd := exec.Command("git", "clone", host+"/"+user_repo+".git")
+func Clone(host, user_repo string, depth bool) {
+	var cmd *exec.Cmd
+
+	if depth == true {
+		cmd = exec.Command("git", "clone", "--depth=1", host+"/"+user_repo+".git")
+	} else {
+		cmd = exec.Command("git", "clone", host+"/"+user_repo+".git")
+	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
