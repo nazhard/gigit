@@ -58,6 +58,7 @@ func Exec(user, repo, subdir string) error {
 		url       string
 		sub       string
 		file_name string
+		hash      string
 		err       error
 	)
 
@@ -67,7 +68,9 @@ func Exec(user, repo, subdir string) error {
 	// When the download is complete, there will be a tarball,
 	// in the tarball there is a pattern of names user-repo-commit_hash
 	commit_hash := gigit.GetLatestCommit(user + "/" + repo)
-	hash := commit_hash[:7]
+	if len(commit_hash) > 7 {
+		hash = commit_hash[:7]
+	}
 
 	if subdir != "" {
 		file_name = subdir + ".tar.gz"
@@ -130,9 +133,8 @@ func SharpExec(u_r, user, repo string) error {
 
 		if err != nil {
 			fmt.Println(err)
-			fmt.Print(gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
-
-			return fmt.Errorf("Upps")
+			fmt.Print(
+				gchalk.BrightBlack("\nRetry with cloning repository...\n\n"))
 		}
 
 		if err == nil {
