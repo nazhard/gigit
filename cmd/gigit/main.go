@@ -15,7 +15,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/jwalton/gchalk"
@@ -30,66 +29,70 @@ func invalid() {
 	fmt.Println(
 		gchalk.Red("Error: invalid format"))
 	fmt.Println(
-		gchalk.Bold("We are unable to accept more than 2 arguments.\nType 'gigit help' for more information."))
+		gchalk.Bold("Type 'gigit help' for more information."))
 	fmt.Println(
 		gchalk.Green("Valid format: 'gigit user/repo'"))
 }
 
 func main() {
+	args := len(os.Args)
+	one := ""
+	if args >= 2 {
+		one = os.Args[1]
+	}
+
 	// By default tells the user what version of gigit they are using
 	fmt.Println(
 		gchalk.Bold("using gigit " + version + "\n"))
 
-	usr_cache_path, _ := os.UserCacheDir()
-
-	cache_path := filepath.Join(usr_cache_path, "gigit")
+	cache_path := cli.CachePath
 	_, err := os.Stat(cache_path)
 	if os.IsNotExist(err) {
 		_ = os.MkdirAll(cache_path, os.ModePerm)
 	}
 
 	// Handles when the user does not give any commands
-	if len(os.Args) == 1 {
+	if args == 1 {
 		fmt.Println(
 			gchalk.Red("Onii-chan! anata wa need repository!"))
 		fmt.Println(
 			gchalk.Blue("Example: gigit nazhard/gigit"))
 	}
 
-	if len(os.Args) == 2 {
+	if args == 2 {
 		// Checks to see if os.Args[1] (argument) has "/" or not.
-		if strings.Contains(os.Args[1], "/") {
-			if !strings.Contains(os.Args[1], "#") {
-				count := strings.Count(os.Args[1], "/")
+		if strings.Contains(one, "/") {
+			if !strings.Contains(one, "#") {
+				count := strings.Count(one, "/")
 				if count == 1 {
-					array := strings.Split(os.Args[1], "/")
+					array := strings.Split(one, "/")
 					user, repo := array[0], array[1]
 
-					err := cli.Exec(user, repo, cache_path, "")
+					err := cli.Exec(user, repo, "")
 					if err != nil {
 						gigit.Clone("https://github.com", user+"/"+repo)
 					}
 				}
 
 				if count >= 2 {
-					array := strings.SplitN(os.Args[1], "/", 3)
+					array := strings.SplitN(one, "/", 3)
 					user, repo, dir := array[0], array[1], array[2]
 
-					err := cli.Exec(user, repo, cache_path, dir)
+					err := cli.Exec(user, repo, dir)
 					if err != nil {
 						gigit.Clone("https://github.com", user+"/"+repo)
 					}
 				}
 			}
 
-			if strings.Contains(os.Args[1], "#") {
-				eps := strings.Split(os.Args[1], "#")
+			if strings.Contains(one, "#") {
+				eps := strings.Split(one, "#")
 				array := strings.Split(eps[0], "/")
 				user, repo := array[0], array[1]
 
 				user_repo := user + "/" + repo
 
-				err := cli.SharpExec(eps[0], user, repo, cache_path)
+				err := cli.SharpExec(eps[0], user, repo)
 				if err != nil {
 					gigit.Clone("https://github.com", user_repo)
 				}
@@ -97,8 +100,10 @@ func main() {
 		}
 
 		// Handles "help" commands
-		if os.Args[1] == "help" {
-			fmt.Println(`Usage: gigit user/repo
+		if !strings.Contains(one, "/") {
+			switch one {
+			case "help":
+				fmt.Println(`Usage: gigit user/repo
        gigit user/repo/subdir
        gigit host:user/repo
        gigit host:user/repo/subdir
@@ -107,15 +112,18 @@ Host: github or gitlab
 
 Examples: gigit nazhard/gigit
           gigit github:nazhard/gigit`)
-		}
-
-		if os.Args[1] != "help" && !strings.Contains(os.Args[1], "/") {
-			invalid()
+			case "clone":
+				// just_clone(false)
+			case "c1", "1":
+				// just_clone(true)
+			default:
+				invalid()
+			}
 		}
 	}
 
 	// Currently we do not have a feature to handle arguments with more than 2
-	if len(os.Args) >= 3 {
+	if args >= 3 {
 		invalid()
 	}
 }

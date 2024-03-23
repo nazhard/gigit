@@ -1,7 +1,6 @@
 package gigit
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codeclysm/extract/v3"
 	"github.com/jwalton/gchalk"
+	"github.com/mholt/archiver/v3"
 )
 
 type commitT struct {
@@ -155,19 +154,14 @@ func CheckCache(path, name, commit_hash string) bool {
 
 // Extract downloaded repository.
 //
-// Extract requires a file or path to a file in .tar.gz format as "in",
-// then an output directory for the extracted contents of the .tar.gz file as "out"
-// and a specific directory/path inside the .tar.gz file to extract its contents as "path".
-func ExtractGz(in, out, path string) {
-	file, _ := os.Open(in)
+// Extract file .tar.gz as "source",
+// then an output directory for the extracted contents of the .tar.gz file as "destination",
+// and a specific directory/path inside the .tar.gz file to extract its contents as "target".
+func ExtractGz(source, target, destination string, strip int) {
+	archive := archiver.NewTarGz()
 
-	var shift = func(path string) string {
-		parts := strings.Split(path, string(filepath.Separator))
-		parts = parts[1:]
-		return strings.Join(parts, string(filepath.Separator))
-	}
-
-	extract.Gz(context.TODO(), file, out, shift)
+	archive.StripComponents = strip
+	archive.Extract(source, target, destination)
 }
 
 // Clone repositories using git instead.
