@@ -103,7 +103,7 @@ func cute(args int, one string) {
 
 				user_repo := user + "/" + repo
 
-				err := cli.SharpExec(eps[0], user, repo)
+				err := cli.SharpExec(user, repo)
 				if err != nil {
 					gigit.Clone("https://github.com", user_repo, false)
 				}

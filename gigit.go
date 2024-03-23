@@ -69,8 +69,8 @@ func Get(name, commit, destination, c_url string) (string, error) {
 		if os.IsNotExist(err) {
 			_ = os.MkdirAll(destination, os.ModePerm)
 		}
-		f, _ := os.Create(out_path)
 
+		f, _ := os.Create(out_path)
 		defer f.Close()
 
 		_, err = f.ReadFrom(res.Body)
@@ -85,8 +85,8 @@ func Get(name, commit, destination, c_url string) (string, error) {
 // This function will fetch the latest commit hash from the repository for the extractor's use.
 // GetLatestCommit is only used when the user does not provide a specific commit hash.
 //
-// Example: "gigit nazhard/gigit"
-func GetLatestCommit(user_repo string) string {
+// Example: "nazhard/gigit"
+func LatestCommit(user_repo string) string {
 	url := "https://api.github.com/repos/" + user_repo + "/commits"
 	res, err := client.Get(url)
 	if err != nil {
@@ -112,7 +112,7 @@ func GetLatestCommit(user_repo string) string {
 	return c
 }
 
-func GetCommitBranch(user_repo, branch string) (string, string, error) {
+func CommitBranch(user_repo, branch string) (string, string, error) {
 	url_to_fetch := "https://api.github.com/repos/" + user_repo + "/branches/" + branch
 	url := "https://github.com/" + user_repo + "/archive/refs/tags/" + branch + ".tar.gz"
 
@@ -157,7 +157,7 @@ func CheckCache(path, name, commit_hash string) bool {
 // Extract file .tar.gz as "source",
 // then an output directory for the extracted contents of the .tar.gz file as "destination",
 // and a specific directory/path inside the .tar.gz file to extract its contents as "target".
-func ExtractGz(source, target, destination string, strip int) {
+func Extract(source, target, destination string, strip int) {
 	archive := archiver.NewTarGz()
 
 	archive.StripComponents = strip

@@ -12,33 +12,30 @@ import (
 )
 
 var userCachePath, _ = os.UserCacheDir()
+
 var CachePath = filepath.Join(userCachePath, "gigit")
 
-func fetcher(user, repo, commit, file_name, goberr, sub, url, c_url string) {
-	user_repo := user + "/" + repo
+var (
+	url    string
+	inside string
+	hash   string
+	err    error
+)
 
+func fetcher(user, repo, commit, goberr, sub, url, c_url string) {
 	fmt.Println("Fetching " + gchalk.Underline(url))
 
-	cache := filepath.Join(CachePath, user, repo)
-
-	err := os.MkdirAll(cache, os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	if c_url != "" {
-		_, err = gigit.Get(user_repo, commit, goberr, c_url)
+		_, err := gigit.Get(user+"/"+repo, commit, goberr, c_url)
 		if err != nil {
 			log.Fatal(
 				gchalk.Red("Internal error"))
 		}
 	}
 
-	file := filepath.Join(cache, repo+".tar.gz")
-	_ = os.MkdirAll(".", os.ModePerm)
+	file := filepath.Join(goberr, repo+".tar.gz")
 
-	gigit.ExtractGz(file, sub, ".", 2)
-	fmt.Println(file, sub)
+	gigit.Extract(file, sub, ".", 2)
 
 	if len(commit) == 7 {
 		_ = os.Rename(user+"-"+repo+"-"+commit, repo)
@@ -54,33 +51,26 @@ func fetcher(user, repo, commit, file_name, goberr, sub, url, c_url string) {
 }
 
 func Exec(user, repo, subdir string) error {
-	var (
-		url       string
-		sub       string
-		file_name string
-		hash      string
-		err       error
-	)
-
 	goberr := filepath.Join(CachePath, user, repo)
+	err = os.MkdirAll(goberr, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// By default it uses HEAD as commit, which is why GetLatestCommit() is so important.
 	// When the download is complete, there will be a tarball,
 	// in the tarball there is a pattern of names user-repo-commit_hash
-	commit_hash := gigit.GetLatestCommit(user + "/" + repo)
+	commit_hash := gigit.LatestCommit(user + "/" + repo)
 	if len(commit_hash) > 7 {
 		hash = commit_hash[:7]
 	}
 
 	if subdir != "" {
-		file_name = subdir + ".tar.gz"
-		sub = user + "-" + repo + "-" + hash + "/" + subdir
+		inside = user + "-" + repo + "-" + hash + "/" + subdir
 		url, err = gigit.Get(user+"/"+repo, "HEAD", goberr, "")
 	} else {
-		file_name = subdir + ".tar.gz"
-		sub = user + "-" + repo + "-" + hash
+		inside = user + "-" + repo + "-" + hash
 		url, err = gigit.Get(os.Args[1], "HEAD", goberr, "")
-		fmt.Println("Fetching " + gchalk.Underline(url))
 	}
 
 	if err != nil {
@@ -91,7 +81,7 @@ func Exec(user, repo, subdir string) error {
 	}
 
 	if err == nil {
-		fetcher(user, repo, commit_hash, file_name, goberr, sub, url, "")
+		fetcher(user, repo, commit_hash, goberr, inside, url, "")
 	}
 
 	return nil
@@ -99,12 +89,8 @@ func Exec(user, repo, subdir string) error {
 
 // Why did I do this? Because I was stressed out with the errors that were appearing.
 // I think making the code twice is easier to read and maintain.
-func SharpExec(u_r, user, repo string) error {
-	var (
-		hash string
-		sub  string
-		err  error
-	)
+func SharpExec(user, repo string) error {
+	user_repo := user + repo
 
 	index_one := strings.Index(os.Args[1], "#")
 	if index_one != -1 {
@@ -113,23 +99,21 @@ func SharpExec(u_r, user, repo string) error {
 
 	goberr := filepath.Join(CachePath, user, repo)
 
-	url, err := gigit.Get(u_r, hash, goberr, "")
+	url, err := gigit.Get(user_repo, hash, goberr, "")
 
 	if strings.Contains(hash, "v") {
 		v := hash[1:]
-		c_url := "https://github.com/" + u_r + "/archive/refs/tags/" + hash + ".tar.gz"
-		url, err = gigit.Get(u_r, v, goberr, c_url)
+		c_url := "https://github.com/" + user_repo + "/archive/refs/tags/" + hash + ".tar.gz"
+		url, err = gigit.Get(user_repo, v, goberr, c_url)
 		version := strings.TrimPrefix(hash, "v")
-		sub = repo + "-" + version
+		inside = repo + "-" + version
 	} else {
-		sub = user + "-" + repo + "-" + hash
+		inside = user + "-" + repo + "-" + hash
 	}
-
-	file_name := repo + ".tar.gz"
 
 	if err != nil {
 		// When commit hash errors.  gigit will check if it's a branch or not.
-		url, commit, err := gigit.GetCommitBranch(u_r, hash)
+		url, commit, err := gigit.CommitBranch(user_repo, hash)
 
 		if err != nil {
 			fmt.Println(err)
@@ -138,12 +122,12 @@ func SharpExec(u_r, user, repo string) error {
 		}
 
 		if err == nil {
-			fetcher(user, repo, commit, file_name, goberr, sub, url, url)
+			fetcher(user, repo, commit, goberr, inside, url, url)
 		}
 	}
 
 	if err == nil {
-		fetcher(user, repo, hash, file_name, goberr, sub, url, "")
+		fetcher(user, repo, hash, goberr, inside, url, "")
 	}
 
 	return nil
