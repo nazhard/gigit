@@ -22,7 +22,7 @@ You can use specific branches, commits, or tags with a `#`
 
 ## Subdirectory
 
-Download sub directory only of a repository.
+Download sub directory only.
 
 	gigit user/repo/dir
 
@@ -73,7 +73,18 @@ func cute(args int, one string) {
 	if args == 2 {
 		// Checks to see if os.Args[1] (argument) has "/" or not.
 		if strings.Contains(one, "/") {
-			if !strings.Contains(one, "#") {
+			if strings.Contains(one, "#") {
+				eps := strings.Split(one, "#")
+				array := strings.Split(eps[0], "/")
+				user, repo := array[0], array[1]
+
+				user_repo := user + "/" + repo
+
+				err := cli.SharpExec(user, repo)
+				if err != nil {
+					gigit.Clone("https://github.com", user_repo, false)
+				}
+			} else {
 				slash := strings.Count(one, "/")
 				if slash == 1 {
 					array := strings.Split(one, "/")
@@ -93,19 +104,6 @@ func cute(args int, one string) {
 					if err != nil {
 						gigit.Clone("https://github.com", user+"/"+repo, false)
 					}
-				}
-			}
-
-			if strings.Contains(one, "#") {
-				eps := strings.Split(one, "#")
-				array := strings.Split(eps[0], "/")
-				user, repo := array[0], array[1]
-
-				user_repo := user + "/" + repo
-
-				err := cli.SharpExec(user, repo)
-				if err != nil {
-					gigit.Clone("https://github.com", user_repo, false)
 				}
 			}
 		}
@@ -133,18 +131,27 @@ func main() {
 			gchalk.Red("Onii-chan! anata wa need repository!"))
 		fmt.Println(
 			gchalk.Blue("Example: gigit nazhard/gigit"))
-	}
-
-	if !strings.Contains(one, "/") {
+	} else if !strings.Contains(one, "/") {
 		if one == "help" {
-			fmt.Println(`Usage: gigit user/repo
+			fmt.Println(`Usage: gigit [command]
+       gigit user/repo
        gigit user/repo/subdir
+       gigit user/repo#dev
+       gigit user/repo#v1.0.0
+       gigit user/repo#7k3b2kw
+
+Commands:
+    help
+        print this help message.
+    clone
+        clone repository instead.
+    c1, 1
+        same as clone but use "--depth=1"
+  
 
 Examples: gigit nazhard/gigit
           gigit nazhard/gigit/cmd`)
-		}
-
-		if args >= 2 && one != "help" {
+		} else if args >= 2 {
 			switch one {
 			case "clone":
 				gigit.Clone("https://github.com", os.Args[2], false)
