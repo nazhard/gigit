@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/faulbert/gigit"
 	"github.com/jwalton/gchalk"
-	"github.com/nazhard/gigit"
 )
 
 var userCachePath, _ = os.UserCacheDir()

@@ -4,13 +4,13 @@ Gigit the repository downloader
 Gigit is inspired by degit a repository downloader written by Rich Harris in JavaScript.
 Gigit has almost the same features as degit. Downloading repositories, caching features, and some still in development.
 
-## Simple usage example:
+# Simple usage example:
 
 	gigit <user>/<repo>
 
 In the example above, gigit will download the GitHub respository with the username <user> and the repository that has the name <repo>.
 
-## Spesific branch, commit hash, tag
+# Spesific branch, commit hash, tag
 
 You can use specific branches, commits, or tags with a `#`
 
@@ -20,7 +20,7 @@ You can use specific branches, commits, or tags with a `#`
 	// on spesific tag, "v" is required
 	gigit user/repo#v1.0.0
 
-## Subdirectory
+# Subdirectory
 
 Download sub directory only.
 
@@ -28,7 +28,7 @@ Download sub directory only.
 
 	gigit nazhard/gigit/cmd/gigit
 
-## Commands
+# Commands
 
 Clone instead of download. With cloning, you will get a .git folder
 
@@ -46,9 +46,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/faulbert/gigit"
+	"github.com/faulbert/gigit/internal/cli"
 	"github.com/jwalton/gchalk"
-	"github.com/nazhard/gigit"
-	"github.com/nazhard/gigit/internal/cli"
 )
 
 const version = "v0.1.0"

@@ -1,4 +1,4 @@
-module github.com/nazhard/gigit
+module github.com/faulbert/gigit
 
 go 1.21.3
 
