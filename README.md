@@ -14,7 +14,7 @@ It is written in Go, making it very efficient in starting any project.
 ## Installation
 
 ```
-go install github.com/nazhard/gigit/cmd/gigit@latest
+go install github.com/faulbert/gigit/cmd/gigit@latest
 ```
 
 ## Example
@@ -45,7 +45,7 @@ Get sub directory of a repository.
 ```sh
 gigit user/repo/dir
 
-gigit nazhard/gigit/cmd/gigit
+gigit faulbert/gigit/cmd/gigit
 ```
 
 #### Commands
@@ -66,7 +66,7 @@ gigit c1 user/repo
 gigit 1 user/repo
 ```
 
-More documentation at [pkg.go.dev/github.com/nazhard/gigit](https://pkg.go.dev/github.com/nazhard/gigit)
+More documentation at [pkg.go.dev/github.com/faulbert/gigit](https://pkg.go.dev/github.com/faulbert/gigit)
 
 ## Why not use degit instead?
 
