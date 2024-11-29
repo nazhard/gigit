@@ -53,92 +53,89 @@ import (
 
 const version = "v0.1.0"
 
-// This function is only to print an error if the user-supplied format is incorrect or inappropriate.
+// invalid prints an error message when the user provides an incorrect or inappropriate format.
 func invalid() {
-	fmt.Println(
-		gchalk.Red("Error: invalid format"))
-	fmt.Println(
-		gchalk.Bold("Type 'gigit help' for more information."))
-	fmt.Println(
-		gchalk.Green("Valid format: 'gigit user/repo'"))
+	fmt.Println(gchalk.Red("Error: invalid format"))
+	fmt.Println(gchalk.Bold("Type 'gigit help' for more information."))
+	fmt.Println(gchalk.Green("Valid format: 'gigit user/repo'"))
 }
 
-func cute(args int, one string) {
-	cache_path := cli.CachePath
-	_, err := os.Stat(cache_path)
+// is responsible for handling user input for fetching a repository.
+// It checks if the input format is valid and then calls the appropriate functions to download the repository.
+func handleFetchInput(args int, input string) {
+	// Define the cache path for storing downloaded repositories
+	cachePath := cli.CachePath
+
+	// Ensure the cache directory exists
+	_, err := os.Stat(cachePath)
 	if os.IsNotExist(err) {
-		_ = os.MkdirAll(cache_path, os.ModePerm)
+		_ = os.MkdirAll(cachePath, os.ModePerm) // Create cache directory if it does not exist
 	}
 
+	// Handle the case where there are exactly two arguments
 	if args == 2 {
-		// Checks to see if os.Args[1] (argument) has "/" or not.
-		if strings.Contains(one, "/") {
-			if strings.Contains(one, "#") {
-				eps := strings.Split(one, "#")
-				array := strings.Split(eps[0], "/")
-				user, repo := array[0], array[1]
+		if strings.Contains(input, "/") { // Check if input contains '/' (user/repo format)
+			if strings.Contains(input, "#") { // Check for commit hash or version
+				// Split the input into user/repo and commit/branch part
+				parts := strings.Split(input, "#")
+				repoParts := strings.Split(parts[0], "/")
+				user, repo := repoParts[0], repoParts[1]
 
-				user_repo := user + "/" + repo
+				userRepo := user + "/" + repo
 
+				// Try fetching the repository with the specific commit/branch
 				err := cli.SharpExec(user, repo)
 				if err != nil {
-					gigit.Clone("https://github.com", user_repo, false)
+					// If fetching fails, clone the repository
+					gigit.Clone("https://github.com", userRepo, false)
 				}
 			} else {
-				slash := strings.Count(one, "/")
-				if slash == 1 {
-					array := strings.Split(one, "/")
-					user, repo := array[0], array[1]
+				// Handle the case where only user/repo is provided
+				repoParts := strings.Split(input, "/")
+				user, repo := repoParts[0], repoParts[1]
 
-					err := cli.Exec(user, repo, "")
-					if err != nil {
-						gigit.Clone("https://github.com", user+"/"+repo, false)
-					}
-				}
-
-				if slash >= 2 {
-					array := strings.SplitN(one, "/", 3)
-					user, repo, dir := array[0], array[1], array[2]
-
-					err := cli.Exec(user, repo, dir)
-					if err != nil {
-						gigit.Clone("https://github.com", user+"/"+repo, false)
-					}
+				// Try fetching the repository without any subdir or commit/branch
+				err := cli.Exec(user, repo, "")
+				if err != nil {
+					// If fetching fails, clone the repository
+					gigit.Clone("https://github.com", user+"/"+repo, false)
 				}
 			}
 		}
 	}
 
+	// Handle the case where there are 3 or more arguments (invalid input)
 	if args >= 3 {
-		invalid()
+		invalid() // Call the invalid function if there are too many arguments
 	}
 }
 
 func main() {
-	// By default tells the user what version of gigit they are using
-	fmt.Println(
-		gchalk.Bold("using gigit " + version + "\n"))
+	// Print the version of the gigit tool that the user is using
+	fmt.Println(gchalk.Bold("Using gigit version " + version + "\n"))
 
+	// Get the number of arguments passed to the program
 	args := len(os.Args)
-	one := ""
+	input := ""
+
+	// If there are arguments, capture the first one
 	if args > 1 {
-		one = os.Args[1]
+		input = os.Args[1]
 	}
 
-	// Handles when the user does not give any commands
+	// Handle case where no command is given (only the program name)
 	if args == 1 {
-		fmt.Println(
-			gchalk.Red("Onii-chan! anata wa need repository!"))
-		fmt.Println(
-			gchalk.Blue("Example: gigit nazhard/gigit"))
-	} else if !strings.Contains(one, "/") {
-		if one == "help" {
+		fmt.Println(gchalk.Red("Onii-chan! anata wa need repository!"))
+		fmt.Println(gchalk.Blue("Example: gigit nazhard/gigit"))
+	} else if !strings.Contains(input, "/") { // Check if input doesn't have '/' (not in user/repo format)
+		// Handle the 'help' command
+		if input == "help" {
 			fmt.Println(`Usage: gigit [command]
-       gigit user/repo
-       gigit user/repo/subdir
-       gigit user/repo#dev
-       gigit user/repo#v1.0.0
-       gigit user/repo#7k3b2kw
+   gigit user/repo
+   gigit user/repo/subdir
+   gigit user/repo#dev
+   gigit user/repo#v1.0.0
+   gigit user/repo#7k3b2kw
 
 Commands:
     help
@@ -147,21 +144,21 @@ Commands:
         clone repository instead.
     c1, 1
         same as clone but use "--depth=1"
-  
 
-Examples: gigit nazhard/gigit
-          gigit nazhard/gigit/cmd`)
-		} else if args >= 2 {
-			switch one {
+Examples: 
+    gigit nazhard/gigit
+    gigit nazhard/gigit/cmd`)
+		} else if args >= 2 { // If there are more than 1 argument
+			switch input {
 			case "clone":
 				gigit.Clone("https://github.com", os.Args[2], false)
 			case "c1", "1":
 				gigit.Clone("https://github.com", os.Args[2], true)
 			default:
-				invalid()
+				invalid() // If the command is not recognized, call invalid() to show an error
 			}
 		}
-	} else {
-		cute(args, one)
+	} else { // Handle valid user/repo input
+		handleFetchInput(args, input)
 	}
 }
