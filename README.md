@@ -1,4 +1,4 @@
-### **gigit - A simple CLI tool for fetching and cloning GitHub repositories**
+## **gigit - A simple CLI tool for fetching and cloning GitHub repositories**
 
 **gigit** is a command-line tool for easily fetching, downloading, and cloning GitHub repositories. It allows users to retrieve repositories by specifying the user, repository name, and commit hash or branch. The tool supports downloading repository archives, cloning repositories, and handling specific subdirectories or tags with simple commands.
 
@@ -21,7 +21,7 @@
 Install the `gigit` CLI tool using Go:
 
 ```sh
-go install github.com/yourusername/gigit@latest
+go install github.com/nazhard/gigit@latest
 ```
 
 #### **Example Usage:**

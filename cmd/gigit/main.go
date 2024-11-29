@@ -46,9 +46,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/faulbert/gigit"
-	"github.com/faulbert/gigit/internal/cli"
 	"github.com/jwalton/gchalk"
+	"github.com/nazhard/gigit"
+	"github.com/nazhard/gigit/internal/cli"
 )
 
 const version = "v0.1.0"
