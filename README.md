@@ -1,89 +1,36 @@
-<span align=center>
-  
-  # Gigit
+### **gigit - A simple CLI tool for fetching and cloning GitHub repositories**
 
-  ###### gigit user/repo
+**gigit** is a command-line tool for easily fetching, downloading, and cloning GitHub repositories. It allows users to retrieve repositories by specifying the user, repository name, and commit hash or branch. The tool supports downloading repository archives, cloning repositories, and handling specific subdirectories or tags with simple commands.
 
-</span>
+#### **Features:**
+- **Fetching Repositories:** Supports fetching repositories by user/repo name, including commit hashes, branches, or tags.
+- **Subdirectory Fetching:** Ability to fetch specific subdirectories within repositories.
+- **Cloning Repositories:** Clone repositories from GitHub with support for shallow clones (`--depth=1`).
+- **Versioning Support:** Handles specific commits or version tags (e.g., `v1.0.0`).
+- **Error Handling & Retries:** Provides helpful error messages and retries the fetch or clone process if needed.
 
----
+#### **Commands:**
+- `gigit user/repo`: Fetches the latest commit of the specified repository.
+- `gigit user/repo/subdir`: Fetches the repository and specific subdirectory.
+- `gigit user/repo#commit`: Fetches a specific commit or branch.
+- `gigit clone user/repo`: Clones the specified repository.
+- `gigit c1 user/repo`: Clones the repository with `--depth=1` for a shallow clone.
+- `gigit help`: Displays help information for using the tool.
 
-Gigit, a tool for downloading repositories at a reasonable speed.
-It is written in Go, making it very efficient in starting any project.
-
-## Installation
-
-```
-go install github.com/faulbert/gigit/cmd/gigit@latest
-```
-
-## Example
-
-By default, gigit will download repos from GitHub, our favorite git as a service.
-
-```sh
-gigit user/repo
-```
-
-#### Spesific branch, commit hash, tag
-
-You can use specific branches, commits, or tags with a `#`
+#### **Installation:**
+Install the `gigit` CLI tool using Go:
 
 ```sh
-gigit user/repo#dev
-
-gigit user/repo#691c0bf
-
-# on spesific tag, "v" is required
-gigit user/repo#v1.0.0
+go install github.com/yourusername/gigit@latest
 ```
 
-#### Subdir
-
-Get sub directory of a repository.
-
+#### **Example Usage:**
 ```sh
-gigit user/repo/dir
-
-gigit faulbert/gigit/cmd/gigit
+gigit nazhard/gigit           # Fetch the latest commit of the 'gigit' repository
+gigit nazhard/gigit/cmd       # Fetch the 'cmd' subdirectory from 'gigit'
+gigit nazhard/gigit#v1.0.0    # Fetch a specific version 'v1.0.0' of 'gigit'
+gigit clone nazhard/gigit     # Clone the 'gigit' repository
+gigit c1 nazhard/gigit        # Clone the 'gigit' repository with depth=1
 ```
-
-#### Commands
-
-Clone instead of download.
-
-With cloning, you will get a .git folder (because it's just git clone 😂)
-
-```sh
-gigit clone user/repo
-```
-
-Clone with `--depth=1` if you just want to fix typo
-
-```sh
-gigit c1 user/repo
-# or
-gigit 1 user/repo
-```
-
-More documentation at [pkg.go.dev/github.com/faulbert/gigit](https://pkg.go.dev/github.com/faulbert/gigit)
-
-## Why not use degit instead?
-
-I don't know.
-I was originally using degit with pnpm, and I felt this way:
-
-- Slow
-- Buggy
-- Good
-
-Honestly, it's a good project.
-But, it doesn't seem to be maintained.
-
-From there I thought about making something similar, with some improvements (maybe).
-
----
-
-Contributors are welcome! 🤗
-
-Inspired by [degit](https://github.com/Rich-Harris/degit)
+# Error Handling:
+- Invalid commands or arguments are met with helpful error messages, guiding the user on the correct usage and providing suggestions for valid commands 
